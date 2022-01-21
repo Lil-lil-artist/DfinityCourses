@@ -1,9 +1,10 @@
-import List "mo:base/List";
-import Iter "mo:base/Iter";
-import Principal "mo:base/Principal";
 import D "mo:base/Debug";
+import Int "mo:base/Int";
+import Iter "mo:base/Iter";
+import List "mo:base/List";
+import Option "mo:base/Option";
+import Principal "mo:base/Principal";
 import Time "mo:base/Time";
-import Int = "mo:base/Int";
   /// import Time = "mo:base/Time";
   ///
   /// actor {
@@ -28,15 +29,15 @@ actor {
     {
         text : Text;
         time : Time.Time;
-        author : Text;
+        author : ?Text;
     };
     
     public type Microblog = actor {
         set_name:shared(Text) -> async ();
-        get_name:shared() -> async Text;
+        get_name:shared() -> async ?Text;
         follow: shared (Principal) -> async ();//关注新用户
         follows: shared query () -> async [Principal];//return followers list
-        followsname: shared query () -> async [Text];//return followers list nickname
+        followsname: shared query () -> async [?Text];//return followers list nickname
         post: shared (Text) -> async ();//post new message 
         posts: shared query (Time.Time) -> async [Message];//return all message published
         timeline : shared (Time.Time) -> async [Message]; //return all meassage published by all followers
@@ -44,20 +45,20 @@ actor {
         unpost :shared ()-> async ();
     };
     
-    stable var name :Text = "anonymous";
+    stable var name :?Text = null;
 
     public func set_name(author:Text) : async (){
-        name := author;
+        name := ?author;
     };
 
-    public func get_name() : async Text{
+    public func get_name() : async ?Text{
         name
     };
 
     //stable 
     stable var followed : List.List<Principal> = List.nil(); //the list of people you followed (Principal)
     //stable 
-    stable var followedname : List.List<Text> = List.nil(); //the list of people you followed (Text nickname)
+    stable var followedname : List.List<?Text> = List.nil(); //the list of people you followed (Text nickname)
 
     public shared func follow(id: Principal) : async (){
         let canister:Microblog = actor (Principal.toText(id));           
@@ -72,7 +73,7 @@ actor {
         List.toArray(followed)
     };
 
-    public shared query func followsname() : async [Text] {
+    public shared query func followsname() : async [?Text] {
         List.toArray(followedname)
     };
 
@@ -127,9 +128,9 @@ actor {
         
         for (id in Iter.fromList(followed)){
             let canister:Microblog = actor (Principal.toText(id)); 
-            
-            
-            if ((await canister.get_name()) == nickname){
+            var optionname = (await canister.get_name());
+            var name = Option.unwrap(optionname);
+            if (name == nickname){
                 let msgs = await canister.posts(0);
                 for (msg in Iter.fromArray(msgs)){
                     all := List.push(msg, all);           
@@ -140,4 +141,4 @@ actor {
         List.toArray(all);
         
     };
-};  
+};   
