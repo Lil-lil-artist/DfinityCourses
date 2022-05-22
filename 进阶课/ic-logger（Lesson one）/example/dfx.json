@@ -1,0 +1,19 @@
+{
+  "canisters": {
+    "logger": {
+      "main": "TextLogger.mo",
+      "type": "motoko"
+    },
+    "Dynamiclogger": {
+      "main": "DynamicLogger.mo",
+      "type": "motoko"
+    }
+  },
+  
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "vessel sources"
+    }
+  }
+}
